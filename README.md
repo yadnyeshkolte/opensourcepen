@@ -15,6 +15,7 @@ For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 
+```
 lib/
 ├── models/          # Data models
 │   ├── user_model.dart
@@ -29,3 +30,4 @@ lib/
 │   ├── onboarding_view.dart
 │   └── product_view.dart
 └── main.dart        # Entry point
+```

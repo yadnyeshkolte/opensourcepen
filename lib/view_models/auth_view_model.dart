@@ -22,8 +22,10 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void logout() {
+  void logout(AppPreferences appPreferences) async {
     _isLoggedIn = false;
+    // Reset the logged in status in shared preferences
+    await appPreferences.resetLoggedInStatus();
     notifyListeners();
   }
 }

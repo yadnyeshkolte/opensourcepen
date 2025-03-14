@@ -29,4 +29,8 @@ class AppPreferences {
   Future<void> setLoggedInBefore() async {
     await _preferences.setBool(_isLoggedInBeforeKey, true);
   }
+
+  Future<void> resetLoggedInStatus() async {
+    await _preferences.setBool(_isLoggedInBeforeKey, false);
+  }
 }

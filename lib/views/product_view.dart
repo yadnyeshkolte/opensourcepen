@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../services/app_preferences.dart';
 import '../view_models/product_view_model.dart';
 import '../view_models/auth_view_model.dart';
 import 'login_view.dart';
@@ -40,7 +41,8 @@ class ProductView extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              authViewModel.logout();
+              // Pass appPreferences to the logout method
+              authViewModel.logout(Provider.of<AppPreferences>(context, listen: false));
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginView()),
