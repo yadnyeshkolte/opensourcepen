@@ -14,3 +14,18 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+lib/
+├── models/          # Data models
+│   ├── user_model.dart
+│   ├── onboarding_model.dart
+│   └── product_model.dart
+├── view_models/     # View models (business logic)
+│   ├── auth_view_model.dart
+│   ├── onboarding_view_model.dart
+│   └── product_view_model.dart
+├── views/           # UI components
+│   ├── login_view.dart
+│   ├── onboarding_view.dart
+│   └── product_view.dart
+└── main.dart        # Entry point
