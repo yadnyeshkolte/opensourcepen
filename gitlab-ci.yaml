@@ -1,0 +1,88 @@
+image: cirrusci/flutter:latest
+
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  FLUTTER_VERSION: stable
+  ANDROID_COMPILE_SDK: "33"
+  ANDROID_BUILD_TOOLS: "33.0.0"
+  ANDROID_SDK_TOOLS: "26.1.1"
+
+cache:
+  paths:
+    - .pub-cache/
+    - .dart_tool/
+    - build/
+
+before_script:
+  - flutter pub get
+  - flutter clean
+
+# Test stage
+flutter_test:
+  stage: test
+  script:
+    - flutter test
+  only:
+    - main
+    - merge_requests
+
+flutter_analyze:
+  stage: test
+  script:
+    - flutter analyze
+  only:
+    - main
+    - merge_requests
+
+# Build stage
+build_android:
+  stage: build
+  script:
+    - flutter build apk --release
+  artifacts:
+    paths:
+      - build/app/outputs/flutter-apk/app-release.apk
+    expire_in: 1 week
+  only:
+    - main
+    - tags
+
+build_ios:
+  stage: build
+  script:
+    - flutter build ios --release --no-codesign
+  artifacts:
+    paths:
+      - build/ios/iphoneos/Runner.app
+    expire_in: 1 week
+  only:
+    - main
+    - tags
+  tags:
+    - ios # macOS runner with this tag
+
+# Deploy stage
+deploy_android:
+  stage: deploy
+  script:
+    - echo "Deploying Android app to Google Play Store"
+    # Google Play deployment script
+    # fastlane supply --apk build/app/outputs/flutter-apk/app-release.apk
+  only:
+    - tags
+  when: manual
+
+deploy_ios:
+  stage: deploy
+  script:
+    - echo "Deploying iOS app to App Store"
+    # App Store deployment script
+  only:
+    - tags
+  tags:
+    - ios
+  when: manual
