@@ -91,7 +91,22 @@ class LoginForm extends StatelessWidget {
             onPressed: () {
               final username = usernameController.text;
               final password = passwordController.text;
-              authViewModel.login(username, password);
+              authViewModel.login(username, password, appPreferences);
+
+              // Navigate based on first launch
+              if (authViewModel.isLoggedIn) {
+                if (appPreferences.isFirstLaunch()) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const OnboardingView()),
+                  );
+                } else {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ProductView()),
+                  );
+                }
+              }
             },
             child: const Padding(
               padding: EdgeInsets.symmetric(vertical: 12.0),

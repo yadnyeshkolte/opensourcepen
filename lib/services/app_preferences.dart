@@ -19,4 +19,14 @@ class AppPreferences {
   Future<void> resetFirstLaunch() async {
     await _preferences.setBool(_isFirstLaunchKey, true);
   }
+
+  static const String _isLoggedInBeforeKey = 'is_logged_in_before';
+
+  bool isLoggedInBefore() {
+    return _preferences.getBool(_isLoggedInBeforeKey) ?? false;
+  }
+
+  Future<void> setLoggedInBefore() async {
+    await _preferences.setBool(_isLoggedInBeforeKey, true);
+  }
 }

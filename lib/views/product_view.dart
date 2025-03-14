@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../view_models/product_view_model.dart';
 import '../view_models/auth_view_model.dart';
 import 'login_view.dart';
+import 'onboarding_view.dart';
 
 class ProductView extends StatelessWidget {
   const ProductView({super.key});
@@ -24,6 +25,18 @@ class ProductView extends StatelessWidget {
         title: const Text('Products'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
+          // Add reconnect button
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Reconnect',
+            onPressed: () {
+              // Show onboarding screens temporarily
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const OnboardingView()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
