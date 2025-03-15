@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:opensourcepen/view_models/navigation_view_model.dart';
 import 'package:opensourcepen/views/main_layout.dart';
-import 'package:opensourcepen/views/product_view.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'view_models/auth_view_model.dart';

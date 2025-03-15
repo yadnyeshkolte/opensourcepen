@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/user_model.dart';
 import '../services/app_preferences.dart';
 
 class AuthViewModel extends ChangeNotifier {

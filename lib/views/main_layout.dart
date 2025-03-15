@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/navigation_view_model.dart';
-import '../view_models/auth_view_model.dart';
-import '../services/app_preferences.dart';
 import 'home_view.dart';
 import 'software_view.dart';
 import 'product_view.dart';
 import 'cart_view.dart';
 import 'orders_view.dart';
-import 'login_view.dart';
-import 'onboarding_view.dart';
 
 class MainLayout extends StatelessWidget {
   const MainLayout({super.key});
@@ -17,8 +13,6 @@ class MainLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final navigationViewModel = Provider.of<NavigationViewModel>(context);
-    final appPreferences = Provider.of<AppPreferences>(context);
-    final authViewModel = Provider.of<AuthViewModel>(context);
 
     // Determine which screens to show based on preferences
     final List<Widget> screens = [
@@ -56,14 +50,4 @@ class MainLayout extends StatelessWidget {
     );
   }
 
-  Widget _getTitle(int index) {
-    switch (index) {
-      case 0: return const Text('Home');
-      case 1: return const Text('Software');
-      case 2: return const Text('Products');
-      case 3: return const Text('Cart');
-      case 4: return const Text('Orders');
-      default: return const Text('App');
-    }
-  }
 }

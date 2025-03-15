@@ -5,7 +5,6 @@ import '../view_models/navigation_view_model.dart';
 import '../view_models/onboarding_view_model.dart';
 import '../services/app_preferences.dart';
 import 'main_layout.dart';
-import 'product_view.dart';
 
 class OnboardingView extends StatelessWidget {
   final bool isRestart;
