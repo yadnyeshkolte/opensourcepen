@@ -21,7 +21,7 @@ lib/
 │   ├── user_model.dart
 │   ├── onboarding_model.dart
 │   └── product_model.dart
-├── view_models/     # View models (business logic)
+├── view_models/     # View models logic
 │   ├── auth_view_model.dart
 │   ├── onboarding_view_model.dart
 │   └── product_view_model.dart
