@@ -31,32 +31,6 @@ class MainLayout extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: _getTitle(navigationViewModel.currentIndex),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Restart Onboarding',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const OnboardingView(isRestart: true)),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              authViewModel.logout(appPreferences);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginView()),
-              );
-            },
-          ),
-        ],
-      ),
       body: screens[navigationViewModel.currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: navigationViewModel.currentIndex,
