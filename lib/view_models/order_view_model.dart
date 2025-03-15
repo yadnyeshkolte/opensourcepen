@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/order_model.dart';
 import '../models/cart_model.dart';
-import 'cart_view_model.dart';
 
 class OrderViewModel extends ChangeNotifier {
   List<OrderModel> _orders = [];

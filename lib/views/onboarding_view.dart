@@ -69,19 +69,24 @@ class OnboardingView extends StatelessWidget {
                     onPressed: () async {
                       if (isRestart) {
                         // If restarting onboarding and skipping, maintain existing access
-                        // Home and Software should still be accessible
                         await appPreferences.setDefaultScreen('products');
                         // KEEP onboarding completion status as true since they're just skipping a restart
                         await appPreferences.setOnboardingCompleted(true);
                       } else {
-                        // First-time onboarding and skipping, set Products as default
-                        // and don't enable Software access
+                        // First-time onboarding and skipping
                         await appPreferences.setDefaultScreen('products');
-                        await appPreferences.setOnboardingCompleted(false);
+
+                        // Check if onboarding was completed before
+                        bool wasCompletedBefore = appPreferences.hasCompletedOnboarding();
+                        // Only set to false if this is truly the first time
+                        if (!wasCompletedBefore) {
+                          await appPreferences.setOnboardingCompleted(false);
+                        }
                       }
                       await appPreferences.setFirstLaunchComplete();
 
                       // Update Navigation ViewModel with correct software access
+                      // This should be based on whether onboarding was completed before OR if this is a restart
                       Provider.of<NavigationViewModel>(context, listen: false)
                           .updateSoftwareAccess(isRestart || appPreferences.hasCompletedOnboarding());
 
