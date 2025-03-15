@@ -33,4 +33,23 @@ class AppPreferences {
   Future<void> resetLoggedInStatus() async {
     await _preferences.setBool(_isLoggedInBeforeKey, false);
   }
+
+  static const String _completedOnboardingKey = 'completed_onboarding';
+  static const String _defaultScreenKey = 'default_screen';
+
+  bool hasCompletedOnboarding() {
+    return _preferences.getBool(_completedOnboardingKey) ?? false;
+  }
+
+  Future<void> setOnboardingCompleted(bool completed) async {
+    await _preferences.setBool(_completedOnboardingKey, completed);
+  }
+
+  String getDefaultScreen() {
+    return _preferences.getString(_defaultScreenKey) ?? 'products';
+  }
+
+  Future<void> setDefaultScreen(String screen) async {
+    await _preferences.setString(_defaultScreenKey, screen);
+  }
 }

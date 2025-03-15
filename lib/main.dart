@@ -1,5 +1,7 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:opensourcepen/view_models/navigation_view_model.dart';
+import 'package:opensourcepen/views/main_layout.dart';
 import 'package:opensourcepen/views/product_view.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,6 +31,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => OnboardingViewModel()),
         ChangeNotifierProvider(create: (_) => ProductViewModel()),
+        ChangeNotifierProvider(create: (_) => NavigationViewModel()),
         Provider.value(value: appPreferences),
       ],
       child: MaterialApp(
@@ -39,9 +42,12 @@ class MyApp extends StatelessWidget {
         ),
         // Change initial route based on login history
         home: appPreferences!.isLoggedInBefore()
-            ? const ProductView()
+            ? _getInitialScreen(appPreferences!)
             : const LoginView(),
       ),
     );
+  }
+  Widget _getInitialScreen(AppPreferences prefs) {
+    return const MainLayout();
   }
 }

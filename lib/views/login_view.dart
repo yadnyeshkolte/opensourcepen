@@ -38,7 +38,7 @@ class LoginForm extends StatelessWidget {
           // Navigate to onboarding on first launch
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const OnboardingView()),
+            MaterialPageRoute(builder: (context) => const OnboardingView(isRestart: false)),
           );
         } else {
           // Skip to product view on subsequent launches
@@ -98,7 +98,7 @@ class LoginForm extends StatelessWidget {
                 if (appPreferences.isFirstLaunch()) {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => const OnboardingView()),
+                    MaterialPageRoute(builder: (context) => const OnboardingView(isRestart: false)),
                   );
                 } else {
                   Navigator.pushReplacement(

@@ -32,9 +32,9 @@ class ProductView extends StatelessWidget {
             tooltip: 'Reconnect',
             onPressed: () {
               // Show onboarding screens temporarily
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const OnboardingView()),
+                MaterialPageRoute(builder: (context) => const OnboardingView(isRestart: false)),
               );
             },
           ),
