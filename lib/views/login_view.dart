@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/auth_view_model.dart';
 import '../services/app_preferences.dart';
+import 'main_layout.dart';
 import 'onboarding_view.dart';
 import 'product_view.dart';
 
@@ -31,7 +32,7 @@ class LoginForm extends StatelessWidget {
     final usernameController = TextEditingController();
     final passwordController = TextEditingController();
 
-    // Navigate to onboarding or product view if already logged in
+// Navigate to onboarding or main layout if already logged in
     if (authViewModel.isLoggedIn) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (appPreferences.isFirstLaunch()) {
@@ -41,10 +42,10 @@ class LoginForm extends StatelessWidget {
             MaterialPageRoute(builder: (context) => const OnboardingView(isRestart: false)),
           );
         } else {
-          // Skip to product view on subsequent launches
+          // Change this line to use MainLayout instead of ProductView
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const ProductView()),
+            MaterialPageRoute(builder: (context) => const MainLayout()),
           );
         }
       });
