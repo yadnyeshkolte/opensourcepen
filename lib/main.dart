@@ -9,6 +9,8 @@ import 'view_models/onboarding_view_model.dart';
 import 'view_models/product_view_model.dart';
 import 'views/login_view.dart';
 import 'services/app_preferences.dart';
+import 'view_models/cart_view_model.dart';
+import 'view_models/order_view_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +33,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => OnboardingViewModel()),
         ChangeNotifierProvider(create: (_) => ProductViewModel()),
         ChangeNotifierProvider(create: (_) => NavigationViewModel()),
+        ChangeNotifierProvider(create: (_) => CartViewModel()),
+        ChangeNotifierProvider(create: (_) => OrderViewModel()),
         Provider.value(value: appPreferences),
       ],
       child: MaterialApp(
