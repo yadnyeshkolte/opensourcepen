@@ -78,7 +78,7 @@ class ProductView extends StatelessWidget {
                   child: Container(
                     width: double.infinity,
                     color: Colors.grey.shade300,
-                    child: Image.network(
+                    child: Image.asset(
                       product.imageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
