@@ -17,13 +17,8 @@ class NavigationViewModel extends ChangeNotifier {
     // Set software access based on onboarding completion
     _softwareEnabled = appPrefs.hasCompletedOnboarding();
 
-    // Set initial tab based on default screen preference
-    String defaultScreen = appPrefs.getDefaultScreen();
-    if (defaultScreen == 'home') {
-      _currentIndex = 0;
-    } else {
-      _currentIndex = 2; // Products screen
-    }
+    // Set initial tab based Home
+    _currentIndex = 0;
 
     notifyListeners();
   }
