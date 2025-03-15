@@ -13,7 +13,7 @@ dependencies:
   shared_preferences: ^2.5.2
   cupertino_icons: ^1.0.8
   intl: ^0.18.1
-  model_viewer_plus: ^1.5.0  # For 3D GLB model viewing
+  flutter_cube: ^0.1.1  # Added this package for 3D rendering
   lottie: ^2.3.2  # For animations (optional)
   smooth_page_indicator: ^1.1.0  # For the page indicator
 
@@ -31,4 +31,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/product_images/
-    - assets/models/
+    - assets/icon/
+    - assets/cube/cube.obj
+    - assets/cube/cube.mtl
+    - assets/cube/flutter.png
