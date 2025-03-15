@@ -61,6 +61,10 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
 
     // Start continuous rotation animation
     _startAnimation();
+
+    // Notify view model that model is loaded
+    final onboardingViewModel = Provider.of<OnboardingViewModel>(context, listen: false);
+    onboardingViewModel.setModelLoaded(true);
   }
 
   void _startAnimation() {
@@ -94,8 +98,8 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      onboardingViewModel.currentScreen.color,
-                      _getDarkerColor(onboardingViewModel.currentScreen.color),
+                      onboardingViewModel.currentScreen.primaryColor,
+                      onboardingViewModel.currentScreen.secondaryColor,
                     ],
                   ),
                 ),
@@ -110,9 +114,9 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                   child: Container(
                     width: screenSize.width * 0.7,
                     height: screenSize.width * 0.7,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white,
+                      color: OnboardingViewModel.white,
                     ),
                   ),
                 ),
@@ -126,9 +130,9 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                   child: Container(
                     width: screenSize.width * 0.5,
                     height: screenSize.width * 0.5,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white,
+                      color: OnboardingViewModel.white,
                     ),
                   ),
                 ),
@@ -152,7 +156,7 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                   // Content area
                   Expanded(
                     child: Transform.translate(
-                      offset: Offset(0, 50 * (1 - _animation.value)),
+                      offset: Offset(screenSize.width * 0.5 * (1 - _animation.value), 0),
                       child: Opacity(
                         opacity: _animation.value,
                         child: Padding(
@@ -165,7 +169,7 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                                 style: const TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: OnboardingViewModel.white,
                                   letterSpacing: 0.5,
                                 ),
                                 textAlign: TextAlign.center,
@@ -175,7 +179,7 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                                 onboardingViewModel.currentScreen.description,
                                 style: const TextStyle(
                                   fontSize: 18,
-                                  color: Colors.white,
+                                  color: OnboardingViewModel.white,
                                   height: 1.5,
                                 ),
                                 textAlign: TextAlign.center,
@@ -201,8 +205,8 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                           width: onboardingViewModel.currentIndex == index ? 24 : 8,
                           decoration: BoxDecoration(
                             color: onboardingViewModel.currentIndex == index
-                                ? Colors.white
-                                : Colors.white.withOpacity(0.5),
+                                ? OnboardingViewModel.white
+                                : OnboardingViewModel.white.withOpacity(0.5),
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -243,63 +247,85 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                           child: const Text(
                             'Skip',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: OnboardingViewModel.white,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
+                        Row(
+                          children: [
+                            // Previous button (visible if not on first screen)
+                            if (onboardingViewModel.currentIndex > 0)
+                              Container(
+                                margin: const EdgeInsets.only(right: 16),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: OnboardingViewModel.white.withOpacity(0.2),
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(Icons.arrow_back, color: OnboardingViewModel.white),
+                                  onPressed: () {
+                                    _animationController.reset();
+                                    onboardingViewModel.previous();
+                                    _animationController.forward();
+                                  },
+                                ),
                               ),
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              if (onboardingViewModel.isLastScreen) {
-                                await appPreferences.setDefaultScreen('home');
-                                await appPreferences.setFirstLaunchComplete();
-                                await appPreferences.setOnboardingCompleted(true);
-
-                                Provider.of<NavigationViewModel>(context, listen: false)
-                                    .updateSoftwareAccess(true);
-
-                                if (context.mounted) {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const MainLayout()),
-                                  );
-                                }
-                              } else {
-                                // Animate transition
-                                _animationController.reset();
-                                onboardingViewModel.next();
-                                _animationController.forward();
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: _getDarkerColor(onboardingViewModel.currentScreen.color),
-                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                              shape: RoundedRectangleBorder(
+                            // Next/Get Started button
+                            Container(
+                              decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(30),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.2),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
                               ),
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              onboardingViewModel.isLastScreen ? 'Get Started' : 'Next',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  if (onboardingViewModel.isLastScreen) {
+                                    await appPreferences.setDefaultScreen('home');
+                                    await appPreferences.setFirstLaunchComplete();
+                                    await appPreferences.setOnboardingCompleted(true);
+
+                                    Provider.of<NavigationViewModel>(context, listen: false)
+                                        .updateSoftwareAccess(true);
+
+                                    if (context.mounted) {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => const MainLayout()),
+                                      );
+                                    }
+                                  } else {
+                                    // Animate transition
+                                    _animationController.reset();
+                                    onboardingViewModel.next();
+                                    _animationController.forward();
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: OnboardingViewModel.white,
+                                  foregroundColor: onboardingViewModel.currentScreen.primaryColor,
+                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: Text(
+                                  onboardingViewModel.isLastScreen ? 'Get Started' : 'Next',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
@@ -311,10 +337,5 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
         },
       ),
     );
-  }
-
-  Color _getDarkerColor(Color color) {
-    final hsl = HSLColor.fromColor(color);
-    return hsl.withLightness((hsl.lightness - 0.15).clamp(0.0, 1.0)).toColor();
   }
 }
