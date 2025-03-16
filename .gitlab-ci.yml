@@ -42,7 +42,7 @@ setup:
 # Build Android APK and AAB
 build_android:
   stage: build
-  image: gradle:7.6.1-jdk11
+  image: cirrusci/flutter:stable
   dependencies:
     - setup
   before_script:

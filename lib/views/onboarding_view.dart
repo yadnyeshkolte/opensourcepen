@@ -80,7 +80,7 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 10000), //for debug make it 1000
+      duration: const Duration(milliseconds: 1000), //for debug make it 1000
     );
     _animation = CurvedAnimation(
       parent: _animationController,
