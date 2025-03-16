@@ -50,6 +50,12 @@ build_android:
     - apt-get install -y curl git unzip xz-utils zip libglu1-mesa
     - git clone https://github.com/flutter/flutter.git -b stable --depth 1 /flutter
     - export PATH=$PATH:/flutter/bin
+    # Debug: Check current directory and list files
+    - pwd
+    - ls -la
+    - ls -la android || echo "Android directory not found"
+    # Create platforms if they don't exist
+    - flutter create --platforms=android .
     # Set up key.properties for signing
     - if [ -n "$ANDROID_KEY_JKS_BASE64" ]; then
       echo $ANDROID_KEY_JKS_BASE64 | base64 -d > android/app/upload-keystore.jks;
