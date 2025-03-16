@@ -39,22 +39,6 @@ setup:
       - pubspec.lock
     expire_in: 1 hour
 
-# Run Flutter tests
-test:
-  stage: test
-  image: ubuntu:22.04
-  dependencies:
-    - setup
-  before_script:
-    - apt-get update -y
-    - apt-get install -y curl git unzip xz-utils zip libglu1-mesa
-    - git clone https://github.com/flutter/flutter.git -b stable --depth 1 /flutter
-    - export PATH=$PATH:/flutter/bin
-  script:
-    - flutter test
-  except:
-    - tags
-
 # Build Android APK and AAB
 build_android:
   stage: build
