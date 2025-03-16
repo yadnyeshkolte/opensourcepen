@@ -22,19 +22,83 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
   late Animation<double> _animation;
   Object? _object;
   late Scene _scene;
+  int _previousIndex = 0;
+  bool _isForward = true;
+  bool _isOutAnimation = false;
+
+  // Camera position variables for transitions
+  late Vector3 _startCameraPosition;
+  late Vector3 _targetCameraPosition;
+  late Vector3 _startObjectRotation;
+  late Vector3 _targetObjectRotation;
+  bool _isCameraAnimating = false;
+
+  // For smooth background color transitions
+  Color _prevPrimaryColor = Colors.transparent;
+  Color _prevSecondaryColor = Colors.transparent;
+  Color _currentPrimaryColor = Colors.transparent;
+  Color _currentSecondaryColor = Colors.transparent;
+
+  // Define different views for each onboarding screen
+  final List<Map<String, dynamic>> _modelViews = [
+    {
+      'camera': Vector3(1, 1, 0),
+      'rotation': Vector3(0, 0, 0),
+      'zoom': 1.8,
+    },
+    {
+      'camera': Vector3(0.5, 0.3, 0.9),
+      'rotation': Vector3(math.pi / 6, math.pi / 4, 0),
+      'zoom': 1.2,
+    },
+    {
+      'camera': Vector3(-0.3, -0.2, 0.9),
+      'rotation': Vector3(-math.pi / 8, -math.pi / 3, math.pi / 10),
+      'zoom': 0.9,
+    },
+    {
+      'camera': Vector3(0.1, 0.5, 0.9),
+      'rotation': Vector3(math.pi / 4, 0, math.pi / 6),
+      'zoom': 1.1,
+    },
+    {
+      'camera': Vector3(0, 1, 0),
+      'rotation': Vector3(0, 0, 0),
+      'zoom': 1.1,
+    },
+  ];
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1000),
     );
     _animation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeInOutCubic,
     );
-    _animationController.forward();
+
+    // Initialize camera positions
+    _startCameraPosition = Vector3(0, 0, 0.9);
+    _targetCameraPosition = Vector3(0, 0, 0.9);
+    _startObjectRotation = Vector3(0, 0, 0);
+    _targetObjectRotation = Vector3(0, 0, 0);
+
+    // Initialize colors after frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final onboardingViewModel = Provider.of<OnboardingViewModel>(context, listen: false);
+      _previousIndex = onboardingViewModel.currentIndex;
+
+      // Initialize background colors
+      _currentPrimaryColor = onboardingViewModel.currentScreen.primaryColor;
+      _currentSecondaryColor = onboardingViewModel.currentScreen.secondaryColor;
+      _prevPrimaryColor = _currentPrimaryColor;
+      _prevSecondaryColor = _currentSecondaryColor;
+
+      _animationController.forward();
+    });
   }
 
   @override
@@ -45,7 +109,10 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
 
   void _onSceneCreated(Scene scene) {
     _scene = scene;
-    _scene.camera.position.z = 0.9;
+
+    // Set initial camera position
+    _scene.camera.position.setFrom(_modelViews[0]['camera']);
+
     _scene.light.position.setFrom(Vector3(0, 10, 10));
     _scene.light.setColor(Colors.white, 1.0, 1.0, 1.0);
 
@@ -55,7 +122,7 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
       lighting: true,
       isAsset: true,
     );
-    _object!.rotation.setValues(0, 0, 0);
+    _object!.rotation.setFrom(_modelViews[0]['rotation']);
     _object!.updateTransform();
     _scene.world.add(_object!);
 
@@ -71,12 +138,188 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
     Future.delayed(const Duration(milliseconds: 16), () {
       if (_object != null && mounted) {
         setState(() {
-          _object!.rotation.y += 0.01;
-          _object!.updateTransform();
+          if (!_isCameraAnimating) {
+            // Apply gentle continuous rotation when not transitioning between screens
+            _object!.rotation.y += 0.005;
+            _object!.updateTransform();
+          } else {
+            // Animate camera and object during screen transitions
+            _animateCameraAndObject();
+          }
         });
         _startAnimation();
       }
     });
+  }
+
+  void _animateCameraAndObject() {
+    // Get current animation progress
+    double progress = _animationController.value;
+
+    Vector3 _lerpVector3(Vector3 a, Vector3 b, double t) {
+      return Vector3(
+        a.x + (b.x - a.x) * t,  // Interpolate x coordinate
+        a.y + (b.y - a.y) * t,  // Interpolate y coordinate
+        a.z + (b.z - a.z) * t,  // Interpolate z coordinate
+      );
+    }
+    // Interpolate camera position
+    Vector3 interpolatedCameraPosition = _lerpVector3(
+        _startCameraPosition,
+        _targetCameraPosition,
+        Curves.easeInOutCubic.transform(progress)
+    );
+    _scene.camera.position.setFrom(interpolatedCameraPosition);
+
+    // Interpolate object rotation
+    Vector3 interpolatedRotation = _lerpVector3(
+        _startObjectRotation,
+        _targetObjectRotation,
+        Curves.easeInOutCubic.transform(progress)
+    );
+    _object!.rotation.setFrom(interpolatedRotation);
+    _object!.updateTransform();
+
+    // Update scene
+    _scene.update();
+  }
+
+  // Get interpolated colors based on animation value
+  Color _getInterpolatedColor(Color color1, Color color2, double value) {
+    return Color.lerp(color1, color2, value)!;
+  }
+
+  void _updateModelView(int screenIndex) {
+    // Ensure we have a view for this index
+    int safeIndex = math.min(screenIndex, _modelViews.length - 1);
+
+    _isCameraAnimating = true;
+
+    // Store current positions
+    _startCameraPosition = Vector3(
+        _scene.camera.position.x,
+        _scene.camera.position.y,
+        _scene.camera.position.z
+    );
+    _targetCameraPosition = _modelViews[safeIndex]['camera'];
+
+    _startObjectRotation = Vector3(
+        _object!.rotation.x,
+        _object!.rotation.y,
+        _object!.rotation.z
+    );
+    _targetObjectRotation = _modelViews[safeIndex]['rotation'];
+  }
+
+  Future<void> _goToNextScreen(OnboardingViewModel viewModel, AppPreferences appPreferences) async {
+    if (viewModel.isLastScreen) {
+      // Keep the original completion logic
+      await appPreferences.setDefaultScreen('home');
+      await appPreferences.setFirstLaunchComplete();
+      await appPreferences.setOnboardingCompleted(true);
+
+      Provider.of<NavigationViewModel>(context, listen: false)
+          .updateSoftwareAccess(true);
+
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainLayout()),
+        );
+      }
+    } else {
+      // Store current colors before transition
+      _prevPrimaryColor = viewModel.currentScreen.primaryColor;
+      _prevSecondaryColor = viewModel.currentScreen.secondaryColor;
+
+      // Update direction flag and previous index
+      _isForward = true;
+      _previousIndex = viewModel.currentIndex;
+
+      // Set that we're doing an out animation
+      _isOutAnimation = true;
+
+      // Animate current content out
+      await _animationController.reverse();
+
+      // Reset for in animation
+      _isOutAnimation = false;
+
+      // Change to next screen
+      viewModel.next();
+
+      // Update the 3D model view for the next screen
+      _updateModelView(viewModel.currentIndex);
+
+      // Update target colors for the transition
+      _currentPrimaryColor = viewModel.currentScreen.primaryColor;
+      _currentSecondaryColor = viewModel.currentScreen.secondaryColor;
+
+      // Animate new content in
+      _animationController.forward().then((_) {
+        // Animation completed
+        _isCameraAnimating = false;
+      });
+    }
+  }
+
+  Future<void> _goToPreviousScreen(OnboardingViewModel viewModel) async {
+    // Store current colors before transition
+    _prevPrimaryColor = viewModel.currentScreen.primaryColor;
+    _prevSecondaryColor = viewModel.currentScreen.secondaryColor;
+
+    // Update direction flag and previous index
+    _isForward = false;
+    _previousIndex = viewModel.currentIndex;
+
+    // Set that we're doing an out animation
+    _isOutAnimation = true;
+
+    // Animate current content out
+    await _animationController.reverse();
+
+    // Reset for in animation
+    _isOutAnimation = false;
+
+    // Go to previous screen
+    viewModel.previous();
+
+    // Update the 3D model view for the previous screen
+    _updateModelView(viewModel.currentIndex);
+
+    // Update target colors for the transition
+    _currentPrimaryColor = viewModel.currentScreen.primaryColor;
+    _currentSecondaryColor = viewModel.currentScreen.secondaryColor;
+
+    // Animate new content in
+    _animationController.forward().then((_) {
+      // Animation completed
+      _isCameraAnimating = false;
+    });
+  }
+
+  Future<void> _skipOnboarding(AppPreferences appPreferences) async {
+    if (widget.isRestart) {
+      await appPreferences.setDefaultScreen('products');
+      await appPreferences.setOnboardingCompleted(true);
+    } else {
+      await appPreferences.setDefaultScreen('products');
+      bool wasCompletedBefore = appPreferences.hasCompletedOnboarding();
+      if (!wasCompletedBefore) {
+        await appPreferences.setOnboardingCompleted(false);
+      }
+    }
+    await appPreferences.setFirstLaunchComplete();
+
+    Provider.of<NavigationViewModel>(context, listen: false)
+        .updateSoftwareAccess(widget.isRestart || appPreferences.hasCompletedOnboarding());
+
+    if (context.mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainLayout()),
+      );
+    }
   }
 
   @override
@@ -89,17 +332,21 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
       body: AnimatedBuilder(
         animation: _animation,
         builder: (context, child) {
+          // Calculate interpolated colors for smooth transition
+          final primaryColor = _getInterpolatedColor(_prevPrimaryColor, _currentPrimaryColor, _animation.value);
+          final secondaryColor = _getInterpolatedColor(_prevSecondaryColor, _currentSecondaryColor, _animation.value);
+
           return Stack(
             children: [
-              // Gradient background
+              // Gradient background with animated colors
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      onboardingViewModel.currentScreen.primaryColor,
-                      onboardingViewModel.currentScreen.secondaryColor,
+                      primaryColor,
+                      secondaryColor,
                     ],
                   ),
                 ),
@@ -144,19 +391,24 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                   // 3D model view
                   SizedBox(
                     height: screenSize.height * 0.5,
-                    child: Transform.translate(
-                      offset: Offset(0, 30 * (1 - _animation.value)),
-                      child: Opacity(
-                        opacity: _animation.value,
-                        child: Cube(onSceneCreated: _onSceneCreated),
-                      ),
-                    ),
+                    child: Cube(onSceneCreated: _onSceneCreated),
                   ),
 
-                  // Content area
                   Expanded(
                     child: Transform.translate(
-                      offset: Offset(screenSize.width * 0.5 * (1 - _animation.value), 0),
+                      // Animation starts from edge of screen based on navigation direction
+                      offset: Offset(
+                          screenSize.width * (
+                              _isOutAnimation
+                                  ? (_isForward
+                                  ? (_animation.value - 1.0) // Going out to left when going forward
+                                  : (1.0 - _animation.value)) // Going out to right when going backward
+                                  : (_isForward
+                                  ? (1.0 - _animation.value) // Coming in from right when going forward
+                                  : (_animation.value - 1.0)) // Coming in from left when going backward
+                          ),
+                          0
+                      ),
                       child: Opacity(
                         opacity: _animation.value,
                         child: Padding(
@@ -221,29 +473,7 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         TextButton(
-                          onPressed: () async {
-                            if (widget.isRestart) {
-                              await appPreferences.setDefaultScreen('products');
-                              await appPreferences.setOnboardingCompleted(true);
-                            } else {
-                              await appPreferences.setDefaultScreen('products');
-                              bool wasCompletedBefore = appPreferences.hasCompletedOnboarding();
-                              if (!wasCompletedBefore) {
-                                await appPreferences.setOnboardingCompleted(false);
-                              }
-                            }
-                            await appPreferences.setFirstLaunchComplete();
-
-                            Provider.of<NavigationViewModel>(context, listen: false)
-                                .updateSoftwareAccess(widget.isRestart || appPreferences.hasCompletedOnboarding());
-
-                            if (context.mounted) {
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(builder: (context) => const MainLayout()),
-                              );
-                            }
-                          },
+                          onPressed: () => _skipOnboarding(appPreferences),
                           child: const Text(
                             'Skip',
                             style: TextStyle(
@@ -265,11 +495,7 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                                 ),
                                 child: IconButton(
                                   icon: const Icon(Icons.arrow_back, color: OnboardingViewModel.white),
-                                  onPressed: () {
-                                    _animationController.reset();
-                                    onboardingViewModel.previous();
-                                    _animationController.forward();
-                                  },
+                                  onPressed: () => _goToPreviousScreen(onboardingViewModel),
                                 ),
                               ),
                             // Next/Get Started button
@@ -285,31 +511,10 @@ class _OnboardingViewState extends State<OnboardingView> with SingleTickerProvid
                                 ],
                               ),
                               child: ElevatedButton(
-                                onPressed: () async {
-                                  if (onboardingViewModel.isLastScreen) {
-                                    await appPreferences.setDefaultScreen('home');
-                                    await appPreferences.setFirstLaunchComplete();
-                                    await appPreferences.setOnboardingCompleted(true);
-
-                                    Provider.of<NavigationViewModel>(context, listen: false)
-                                        .updateSoftwareAccess(true);
-
-                                    if (context.mounted) {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => const MainLayout()),
-                                      );
-                                    }
-                                  } else {
-                                    // Animate transition
-                                    _animationController.reset();
-                                    onboardingViewModel.next();
-                                    _animationController.forward();
-                                  }
-                                },
+                                onPressed: () => _goToNextScreen(onboardingViewModel, appPreferences),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: OnboardingViewModel.white,
-                                  foregroundColor: onboardingViewModel.currentScreen.primaryColor,
+                                  foregroundColor: primaryColor, // Use interpolated color
                                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
