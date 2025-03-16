@@ -1,0 +1,110 @@
+stages:
+  - setup
+  - test
+  - build
+  - distribute
+
+variables:
+  FLUTTER_VERSION: "3.0.0"  # Adjust to match your SDK version
+  ANDROID_COMPILE_SDK: "34"
+  ANDROID_BUILD_TOOLS: "34.0.0"
+  ANDROID_SDK_TOOLS: "9123335"
+
+# Cache Flutter dependencies between jobs
+cache:
+  key: flutter-${CI_COMMIT_REF_SLUG}
+  paths:
+    - .pub-cache/
+    - build/
+    - .dart_tool/
+
+# Install Flutter SDK and dependencies
+setup:
+  stage: setup
+  image: ubuntu:22.04
+  before_script:
+    - apt-get update -y
+    - apt-get install -y curl git unzip xz-utils zip libglu1-mesa
+  script:
+    - git clone https://github.com/flutter/flutter.git -b stable --depth 1 /flutter
+    - export PATH=$PATH:/flutter/bin
+    - flutter doctor -v
+    - flutter pub get
+  artifacts:
+    paths:
+      - .dart_tool/
+      - .pub-cache/
+      - .flutter-plugins
+      - .flutter-plugins-dependencies
+      - pubspec.lock
+    expire_in: 1 hour
+
+# Run Flutter tests
+test:
+  stage: test
+  image: ubuntu:22.04
+  dependencies:
+    - setup
+  before_script:
+    - apt-get update -y
+    - apt-get install -y curl git unzip xz-utils zip libglu1-mesa
+    - git clone https://github.com/flutter/flutter.git -b stable --depth 1 /flutter
+    - export PATH=$PATH:/flutter/bin
+  script:
+    - flutter test
+  except:
+    - tags
+
+# Build Android APK and AAB
+build_android:
+  stage: build
+  image: gradle:7.6.1-jdk11
+  dependencies:
+    - setup
+  before_script:
+    - apt-get update -y
+    - apt-get install -y curl git unzip xz-utils zip libglu1-mesa
+    - git clone https://github.com/flutter/flutter.git -b stable --depth 1 /flutter
+    - export PATH=$PATH:/flutter/bin
+    # Set up key.properties for signing
+    - if [ -n "$ANDROID_KEY_JKS_BASE64" ]; then
+      echo $ANDROID_KEY_JKS_BASE64 | base64 -d > android/app/upload-keystore.jks;
+      echo "storePassword=$KEY_STORE_PASSWORD" >> android/key.properties;
+      echo "keyPassword=$KEY_PASSWORD" >> android/key.properties;
+      echo "keyAlias=$KEY_ALIAS" >> android/key.properties;
+      echo "storeFile=upload-keystore.jks" >> android/key.properties;
+      fi
+  script:
+    - flutter build apk --release
+    - flutter build appbundle --release
+  artifacts:
+    paths:
+      - build/app/outputs/flutter-apk/app-release.apk
+      - build/app/outputs/bundle/release/app-release.aab
+    expire_in: 1 week
+  only:
+    - main
+    - tags
+
+# Distribute to Firebase App Distribution (Android)
+distribute_android:
+  stage: distribute
+  image: ruby:3.2
+  dependencies:
+    - build_android
+  before_script:
+    - gem install bundler
+    - gem install fastlane
+    - gem install firebase_app_distribution
+  script:
+    - fastlane add_plugin firebase_app_distribution
+    - |
+      fastlane run firebase_app_distribution_upload \
+        app: $FIREBASE_APP_ID_ANDROID \
+        firebase_cli_token: $FIREBASE_TOKEN \
+        release_notes: "Build from GitLab CI - $CI_COMMIT_SHORT_SHA" \
+        groups: "testers" \
+        apk_path: "build/app/outputs/flutter-apk/app-release.apk"
+  only:
+    - main
+    - tags
