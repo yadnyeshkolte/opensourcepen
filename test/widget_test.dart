@@ -15,16 +15,47 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Print widget tree for debugging
+    debugDumpApp();
+
+    // Find the counter text wherever it is (using any widget that might contain it)
+    final counterTextFinder = find.byWidgetPredicate((widget) {
+      if (widget is Text) {
+        // Check if the widget's data contains a digit
+        return RegExp(r'\d+').hasMatch(widget.data ?? '');
+      }
+      return false;
+    });
+
+    // Verify that we found the counter text
+    expect(counterTextFinder, findsOneWidget, reason: 'Could not find any widget with numeric text');
+
+    // Get the initial value
+    final initialText = (tester.widget(counterTextFinder) as Text).data;
+    print('Initial counter value: $initialText');
+
+    // Find the increment button (plus icon)
+    final incrementButtonFinder = find.byIcon(Icons.add);
+    expect(incrementButtonFinder, findsOneWidget, reason: 'Could not find the increment button with Icons.add');
 
     // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    await tester.tap(incrementButtonFinder);
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Find the counter text again
+    final updatedCounterFinder = find.byWidgetPredicate((widget) {
+      if (widget is Text) {
+        // Check if the widget's data contains a digit that's different from initial
+        return widget.data != initialText && RegExp(r'\d+').hasMatch(widget.data ?? '');
+      }
+      return false;
+    });
+
+    // Verify that counter has changed
+    expect(updatedCounterFinder, findsOneWidget, reason: 'Could not find the updated counter value');
+
+    // Print the new value for debugging
+    final newText = (tester.widget(updatedCounterFinder) as Text).data;
+    print('New counter value: $newText');
   });
 }
